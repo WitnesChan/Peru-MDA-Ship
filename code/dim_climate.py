@@ -14,7 +14,7 @@ def fetch_country_temperature(country, start_date, end_date, num_of_stations):
 
 
 df_country_info = pd.read_csv(
-    'Peru-MDA-Ship/data/dim_country_static_info.csv',
+    'Peru-MDA-Ship/data/dim_hw_country_static_info.csv',
     index_col = 'alpha3_code')
 
 
