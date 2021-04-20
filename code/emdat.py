@@ -15,11 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
-
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-
-
+import math
 sns.set(rc={'figure.figsize':(12,7)})
 pd.set_option("display.max_rows", 300)
 pd.set_option("display.max_columns", 30)
@@ -30,6 +26,7 @@ df_emdat = pd.read_excel(
     'Peru-MDA-Ship/data/emdat_public_2021_04_02.xlsx',
     engine = 'openpyxl'
     )
+df_emdat['Year_10'] = (df_emdat.Year /10).astype(int) *10
 
 # print all of disasters categories in this dataset.
 print(df_emdat['Disaster Subtype'].unique())
@@ -52,40 +49,26 @@ df_country_ts = df_country_ts.reset_index()
 df_country_ts.Year = df_country_ts['Year'].astype(int)
 df_country_ts = df_country_ts.set_index(['alpha2_code', 'Year'])
 
-
-#%%
-from linearmodels.datasets import wage_panel
-from linearmodels.panel import PooledOLS
-
-#%%
-
-exog_vars = ['total_population', 'urban_pop_ratio', 'forest_area_ratio',
-       'agri_land_ratio', 'gdp_growth_rate', 'gdp_growth_usd',
-       'Unemployment_ratio', 'co2_emission_kt', 'Year']
-exog = sm.add_constant(df_country_ts[exog_vars])
-mod = PooledOLS(df_country_ts.num_of_heat_waves, exog =exog, check_rank=False)
-pooled_res = mod.fit()
-print(pooled_res)
-
-
-#%%
-
-fam = sm.families.Poisson()
-ind = sm.cov_struct.Exchangeable()
-
-
-mod = smf.gee(formula =
-    'num_of_heat_waves ~ alpha2_code + Year + total_population + urban_pop_ratio + forest_area_ratio + agri_land_ratio + gdp_growth_rate + gdp_growth_usd + Unemployment_ratio + co2_emission_kt + num_of_heat_waves',
-    groups = 'alpha2_code',data = df_country_ts.reset_index(), cov_struct=ind, family=fam)
-
-res = mod.fit()
-
-print(res.summary())
-
 #%%
 sns.countplot(y = 'Disaster Type',  hue = 'Continent', data = df_emdat, orient = 'v')
+
 #%%
-sns.countplot(y = 'Disaster Subtype',  hue = 'Continent', data = df_emdat, orient = 'v')
+sns.heatmap(
+    pd.pivot_table(
+        index = 'Year', columns = 'Disaster Subtype',
+        values= 'ISO', aggfunc='count', fill_value= 0,
+        data = df_emdat
+    ).corr(),
+    annot = True
+)
+
+#%%
+
+pd.pivot_table(
+    index = 'Year_10', columns = 'Disaster Subtype',
+    values= 'ISO', aggfunc='count', fill_value= 0,
+    data = df_emdat
+).loc[1900:2010].plot(kind ='bar', stacked= True)
 
 
 #%%
@@ -123,7 +106,7 @@ df_heat_wave = pd.merge(
     right_index = True
 )
 
-df_heat_wave.to_csv('Peru-MDA-Ship/data/heat_wave_records.csv')
+#df_heat_wave.to_csv('Peru-MDA-Ship/data/heat_wave_records.csv')
 
 #%%
 
@@ -221,12 +204,7 @@ df_heat_wave['lastdays'] = df_heat_wave.apply(
         ).days,
     axis =1)
 
-#%%
-df_year_conti = df_heat_wave.groupby(['Continent','Year'])['ISO'].count().reset_index()
 
-#%%
-
-df_heat_wave['lastdays'].hist()
 #%%
 sns.distplot(
     df_heat_wave[df_heat_wave['lastdays'] != 376]['lastdays']

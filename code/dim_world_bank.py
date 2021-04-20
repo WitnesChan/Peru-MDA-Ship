@@ -8,25 +8,24 @@ class WBDIndicatorFetcher(object):
 
     def construct_static_info(self):
 
-        df_country_info = wb.get_countries()
-        df_country_info = df_country_info[df_country_info.region !='Aggregates']
+        self.df_country_info = wb.get_countries()
+        self.df_country_info = self.df_country_info[self.df_country_info.region !='Aggregates']
 
         from meteostat import Stations
 
         ## fetch the number of weather stations for each country.
-        df_country_info['num_of_weather_station'] = df_country_info.apply(
+        self.df_country_info['num_of_weather_station'] = self.df_country_info.apply(
             lambda r: Stations().region(r['iso2Code']).count() ,axis=1
             )
         ## fetch the land area for each country.
-        df_country_info = fetch_countries_indicator(
-                df_country_info,
+        self.fetch_countries_indicator(
                 indicator = 'AG.LND.TOTL.K2',
                 col_name = 'land_area_sq_km',
                 spec_year = '2018'
                 )
 
-        self.df_country_info = df_country_info
-        self.country_codes = df_country_info.index
+        self.country_codes = self.df_country_info.index
+        self.df_country_info.index.names = ['country']
 
 
     def construct_panel_data(self, start_year = 1980, end_year = 2020):
@@ -43,7 +42,7 @@ class WBDIndicatorFetcher(object):
                 ]
             )
         )
-        self.df_country_ts.index.names = ['Country', 'Year']
+        self.df_country_ts.index.names = ['country', 'year']
 
 
     def fetch_countries_indicator_ts(
@@ -64,7 +63,7 @@ class WBDIndicatorFetcher(object):
 
         '''
         self.df_country_info[col_name] = wb.get_series(
-                indicator, country = country, date = spec_year, simplify_index = True,
+                indicator, date = spec_year, simplify_index = True,
                 id_or_value = 'id'
                 )
 
@@ -82,7 +81,6 @@ class WBDIndicatorFetcher(object):
                     .set_index('Country',append =True).reorder_levels([1, 0], axis=0).sort_index()
 
 
-
 #%%
 
 wbd = WBDIndicatorFetcher()
@@ -90,7 +88,9 @@ wbd.construct_static_info()
 wbd.df_country_info
 
 # df_country_info.to_csv('Peru-MDA-Ship/data/dim_all_country_static_info.csv')
+
 #%%
+
 indicator_maps = {
     'SP.POP.TOTL' : 'total_population',
     'SP.URB.TOTL.IN.ZS' : 'urban_pop_ratio',
@@ -104,5 +104,22 @@ indicator_maps = {
 wbd.construct_panel_data()
 wbd.fetch_countries_indicators(indicator_maps)
 
-wbd.df_country_ts
 #%%
+
+df_country_ts = pd.merge(
+    wbd.df_country_ts,
+    wbd.df_country_info,
+    left_index= True,
+    right_index =True
+).reset_index().set_index(['iso2Code', 'year'])
+
+df_country_ts.index.names = ['country', 'year']
+
+df_country_ts.index.set_levels(
+     np.arange(1980,2020),
+     1,
+     inplace= True
+)
+#%%
+
+df_country_ts.head()

@@ -1,5 +1,10 @@
 import pandas as pd
 
+
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
+
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.graphics.tsaplots import plot_predict
 from statsmodels.tsa.seasonal import STL, seasonal_decompose
@@ -131,10 +136,6 @@ arma_mod = ARIMA(endog = trend, order = (5,1,0))
 arma_res = arma_mod.fit()
 
 arma_res.summary()
-
-
-#%%
-df_heat_wave[(df_heat_wave.Country=='Pakistan') & (df_heat_wave.Year =='2014')].T
 
 
 #%%
