@@ -1,10 +1,6 @@
 import pandas as pd
-
-
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-
-
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.graphics.tsaplots import plot_predict
 from statsmodels.tsa.seasonal import STL, seasonal_decompose
@@ -27,7 +23,20 @@ def kpss_test(timeseries):
         kpss_output['Critical Value (%s)'%key] = value
     print (kpss_output)
 
+os.chdir('/Users/witnes/Workspace/MDA/Peru-MDA-Ship')
 
+#%%
+
+df_country_ts_dim = pd.read_csv('data/dim_all_country_info.csv',
+    index_col = ['country', 'year']
+    )
+#%%
+
+df_country_ts_dim['is_hw_happend'] = df_country_ts_dim.HWN.apply(lambda r : r > 0)
+#%%
+df_country_ts_dim.loc[:, ['HWF','HWD','HWN']].fillna(0)
+#%%
+df_country_ts_dim.info
 
 #%%
 
@@ -61,8 +70,6 @@ df_ts_year.plot()
 for y in range(1980, 2020):
     plt.axvline(x = str(y), linestyle='--', c ='black', alpha = 0.2)
 
-
-
 #%% Hodrick-Prescott Filter
 
 hw_cycle, hw_trend = sm.tsa.filters.hpfilter(df_ts_year)
@@ -79,8 +86,7 @@ for y in range(1980, 2020):
 plt.legend()
 
 #%%
-trend.subtract(trend.shift(1) ,axis=0)
-#%%
+
 sm.graphics.tsa.plot_pacf(trend.subtract(trend.shift(1) ,axis=0).dropna(), lags=80)
 #sm.graphics.tsa.plot_acf(trend.subtract(trend.shift(1) ,axis=0).dropna(), lags=10)
 

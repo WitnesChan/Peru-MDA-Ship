@@ -231,27 +231,14 @@ df_hw_gen = df_thres_filter.groupby(['country', 'year']).agg(
 )
 df_hw_gen.columns = ['HWF','HWD','HWN','HWA','HWM']
 
-#df_hw_gen.to_csv('Peru-MDA-Ship/data/dim_temp_gen_heat_wave.csv')
-
-#%%
-
-df_hw_gen.reset_index().groupby(['year'])['country'].nunique().plot()
-
-df_hw_gen.reset_index().groupby(['year'])['HWN'].sum().plot()
-
-#%%
-df_hw_gen.reset_index().groupby(['year'])['HWN'].sum()
-#%%
-wbd.df_country_ts.info()
+# df_hw_gen.to_csv('data/dim_temp_gen_heat_wave.csv')
 
 #%%
 df_country_ts_dim = pd.merge(
     df_country_ts,
     df_hw_gen,
     left_index= True,
-    right_index =True
+    right_index =True,
+    how = 'left'
 )
-
-#%%
-#df_country_ts_dim.to_csv('Peru-MDA-Ship/data/dim_all_country_info.csv')
-df_country_ts_dim
+# df_country_ts_dim.to_csv('data/dim_all_country_info.csv')
