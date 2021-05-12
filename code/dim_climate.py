@@ -233,7 +233,7 @@ df_hw_gen.columns = ['HWF','HWD','HWN','HWA','HWM']
 
 # df_hw_gen.to_csv('data/dim_temp_gen_heat_wave.csv')
 
-#%%
+#%%%
 df_country_ts_dim = pd.merge(
     df_country_ts,
     df_hw_gen,
@@ -241,4 +241,12 @@ df_country_ts_dim = pd.merge(
     right_index =True,
     how = 'left'
 )
-# df_country_ts_dim.to_csv('data/dim_all_country_info.csv')
+
+df_country_ts_dim[['tmp_mean', 'tmp_median']] = \
+    df_temp_day_coun.groupby(
+        ['country', 'year']
+    )['tavg'].agg(['mean', 'median']).rename(
+        columns = {'mean':'temp_mean', 'median': 'temp_median'}
+        )
+
+#df_country_ts_dim.to_csv('data/dim_all_country_info.csv')

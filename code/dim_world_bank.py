@@ -98,7 +98,10 @@ indicator_maps = {
     'NY.GDP.MKTP.KD.ZG': 'gdp_growth_rate',
     'NY.GDP.MKTP.CD': 'gdp_growth_usd',
     'EN.ATM.CO2E.KT': 'co2_emission_kt',
-    'AG.LND.AGRI.ZS': 'agri_land_ratio'
+    'AG.LND.AGRI.ZS': 'agri_land_ratio',
+    'EN.ATM.METH.KT.CE': 'methane_emission_kt',
+    'AG.PRD.LVSK.XD': 'livestock_prod_ind',
+    'AG.PRD.FOOD.XD': 'food_prod_ind'
 }
 
 wbd.construct_panel_data()
@@ -120,6 +123,3 @@ df_country_ts.index.set_levels(
      1,
      inplace= True
 )
-#%%
-
-df_country_ts.head()

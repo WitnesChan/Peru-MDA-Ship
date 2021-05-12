@@ -1,3 +1,8 @@
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -23,22 +28,71 @@ def kpss_test(timeseries):
         kpss_output['Critical Value (%s)'%key] = value
     print (kpss_output)
 
+def hp_filter_decomp(df_ts):
+
+    # Hodrick-Prescott Filter
+    hw_cycle, hw_trend = sm.tsa.filters.hpfilter(df_ts)
+    hw_year_decomp = df_ts.copy()
+    hw_year_decomp['cycle'] = hw_cycle
+    hw_year_decomp['trend'] = hw_trend
+    hw_year_decomp.plot()
+
+    for y in range(1980, 2020):
+        plt.axvline(x = str(y), linestyle='--', c ='black', alpha = 0.2)
+
+    plt.legend()
+
+def stl_decomp(df_ts, period = 5, plot_seasonal = True):
+    stl = STL(df_ts, period = period)
+    res = stl.fit()
+    seasonal, trend, resid = res.seasonal, res.trend, res.resid
+    estimated = seasonal + trend
+
+    plt.figure(figsize=(13,7))
+    df_ts.plot()
+    trend.plot()
+    estimated.plot(label ='estimated')
+    if(plot_seasonal):
+        seasonal.plot()
+    plt.legend()
+
 os.chdir('/Users/witnes/Workspace/MDA/Peru-MDA-Ship')
 
-#%%
+# %%
 
 df_country_ts_dim = pd.read_csv('data/dim_all_country_info.csv',
     index_col = ['country', 'year']
     )
-#%%
 
-df_country_ts_dim['is_hw_happend'] = df_country_ts_dim.HWN.apply(lambda r : r > 0)
-#%%
-df_country_ts_dim.loc[:, ['HWF','HWD','HWN']].fillna(0)
-#%%
-df_country_ts_dim.info
 
-#%%
+
+# %%
+## Frequency
+df_hwd_ts = df_country_ts_dim.groupby(['year'])['HWN'].sum()
+stl_decomp(df_ts= df_hwd_ts, period = 4)
+# %%
+## Duration (Total days of Heat Waves)
+
+df_hwf_ts = df_country_ts_dim.groupby(['year'])['HWF'].sum()
+stl_decomp(df_ts= df_hwf_ts, period = 4)
+
+# %%
+## Duration (Longest days of Heat Waves)
+df_hwd_ts = df_country_ts_dim.groupby(['year'])['HWD'].max()
+stl_decomp(df_ts= df_hwd_ts, period = 4)
+# %%
+## Intensity (Hottest day of hottest yearly event)
+df_hwa_ts = df_country_ts_dim.groupby(['year'])['HWA'].max()
+stl_decomp(df_ts= df_hwa_ts, period = 4, plot_seasonal = False)
+
+# %%
+## Intensity (average magnitude of all yearly heat waves)
+df_hwm_ts = df_country_ts_dim.groupby(['year'])['HWM'].max()
+stl_decomp(df_ts= df_hwa_ts, period = 4, plot_seasonal = False)
+
+# %%
+df_country_ts_dim.info()
+# %%
 
 obs_start = '1980-01'
 obs_end = '2020-01'
@@ -70,87 +124,16 @@ df_ts_year.plot()
 for y in range(1980, 2020):
     plt.axvline(x = str(y), linestyle='--', c ='black', alpha = 0.2)
 
-#%% Hodrick-Prescott Filter
-
-hw_cycle, hw_trend = sm.tsa.filters.hpfilter(df_ts_year)
-hw_year_decomp = df_ts_year.copy()
-hw_year_decomp['hw_cycle'] = hw_cycle
-hw_year_decomp['hw_trend'] = hw_trend
-
-
-hw_year_decomp.plot()
-
-for y in range(1980, 2020):
-    plt.axvline(x = str(y), linestyle='--', c ='black', alpha = 0.2)
-
-plt.legend()
-
-#%%
+# %%
 
 sm.graphics.tsa.plot_pacf(trend.subtract(trend.shift(1) ,axis=0).dropna(), lags=80)
 #sm.graphics.tsa.plot_acf(trend.subtract(trend.shift(1) ,axis=0).dropna(), lags=10)
 
-#%% Year
-# stl = STL(df_ts_month, period =12, seasonal = 11)
+# %%
 
-stl = STL(df_ts_year, period = 3)
-res = stl.fit()
-seasonal, trend, resid = res.seasonal, res.trend, res.resid
-
-plt.figure(figsize=(13,7))
-df_ts_year.plot()
-trend.plot()
-seasonal.plot()
-plt.legend()
-
-#%% Month
-
-stl = STL(df_ts_month, period =12)
-res = stl.fit()
-seasonal, trend, resid = res.seasonal, res.trend, res.resid
-
-plt.figure(figsize=(13,7))
-df_ts_month.plot()
-trend.plot()
-seasonal.plot()
-plt.legend()
-
-#%%
-trend = df_ts_month.subtract(df_ts_month.shift(12), axis=0).dropna()
-
-trend.plot()
-
-#%% Stationarity and detrending (ADF/KPSS)¶
-
-adf_test(trend)
-kpss_test(trend)
-kpss_test(trend.subtract(trend.shift(1)).dropna())
-
-#%%
-
-estimated = seasonal + trend
-
-plt.figure(figsize=(14,7))
-estimated.plot(label = 'estimated')
-plt.plot(df_ts_year, label = 'real')
-plt.legend()
-
-#%%
-
-# arma_mod = ARIMA(endog = df_overall_hw_by_year_.subtract(trend, axis =0), order = (3,0,0))
 arma_mod = ARIMA(endog = trend, order = (5,1,0))
 arma_res = arma_mod.fit()
 
 arma_res.summary()
 
-
-#%%
 plot_predict(arma_res,start='2000', end ='2020')
-
-#%%
-# ax1 = (arma_res.predict() + trend).plot(figsize = (13, 7), label = 'estimated')
-
-fig, ax = plt.subplots(figsize=(10,8))
-fig = arma_res.predict().plot(ax=ax)
-df_overall_hw_by_year_.rename(columns = {'ISO':'real'}).plot(ax =ax)
-plt.legend()
