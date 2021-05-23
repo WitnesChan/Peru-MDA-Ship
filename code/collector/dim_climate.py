@@ -36,19 +36,6 @@ def fetch_country_daily_temperature(country, start_date, end_date, num_of_statio
     df_temp_data['country'] = country
     return df_temp_data[['country','tmax','tmin','tavg','pres']]
 
-
-def fetch_country_month_temperature(country, start_date, end_date, num_of_stations):
-
-    stations = list(
-        Stations().region(country).fetch(num_of_stations).index
-        )
-
-    df_temp_data = Daily(stations, start_date, end_date) \
-        .normalize().aggregate('1M').fetch()
-
-    return df_temp_data
-
-
 def fetch_countries_daily_temperature():
 
     df_country_info = pd.read_csv(
@@ -107,7 +94,9 @@ df_temp_day_coun = df_temp_data.groupby(['country', 'year','date']).agg({
     'pres': 'max'
 })
 
-# df_temp_day_coun.to_csv('Peru-MDA-Ship/data/dim_temp_country_day_1980_2019.csv')
+df_temp_day_coun.to_csv('data/dim_temp_country_day_1980_2019.csv')
+
+
 df_temp_day_coun = pd.read_csv(
     'Peru-MDA-Ship/data/dim_temp_country_day_1980_2019.csv',
     )
@@ -189,11 +178,11 @@ df_thres_filter['last_date'] = \
 df_thres_filter['next_date'] = \
     df_thres_filter.groupby(['country', 'year'])['date'].shift(-1)
 
-df_thres_filter['start_flag'] = df_thres_filter.apply(lambda r:
-        (r['date'] - r['last_date']).days > 1
+df_thres_filter['start_flag'] = df_thres_filter.apply(
+    lambda r: (r['date'] - r['last_date']).days > 1
     , axis = 1)
-df_thres_filter['end_flag'] = df_thres_filter.apply(lambda r:
-        (r['next_date'] - r['date']).days > 1
+df_thres_filter['end_flag'] = df_thres_filter.apply(
+    lambda r: (r['next_date'] - r['date']).days > 1
     , axis = 1)
 
 df_thres_filter = df_thres_filter[
@@ -219,7 +208,8 @@ df_thres_filter[['avg_maximum_temp', 'maximum_temp']] = df_thres_filter.apply(
         df_temp_day_coun_[
             df_temp_day_coun_.date.between(r['date'], r['end_date'])
             ].loc[r['country_code']]['tmax'].agg(['mean', 'max']), axis =1
-            ).rename(columns = {'mean':'avg_maximum_temp', 'max': 'maximum_temp'})
+            ).rename(columns = {'mean':'avg_maximum_temp', 'max': 'maximum_temp'}
+            )
 
 df_hw_gen = df_thres_filter.groupby(['country', 'year']).agg(
     {
@@ -231,9 +221,9 @@ df_hw_gen = df_thres_filter.groupby(['country', 'year']).agg(
 )
 df_hw_gen.columns = ['HWF','HWD','HWN','HWA','HWM']
 
-# df_hw_gen.to_csv('data/dim_temp_gen_heat_wave.csv')
+df_hw_gen.to_csv('data/dim_temp_gen_heat_wave.csv')
 
-#%%%
+#%%
 df_country_ts_dim = pd.merge(
     df_country_ts,
     df_hw_gen,
