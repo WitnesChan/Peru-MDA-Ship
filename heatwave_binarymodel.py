@@ -1,43 +1,21 @@
-import sys
-import os
 import pandas as pd
 import numpy as np
-import seaborn as sns
-
-import warnings
-warnings.filterwarnings('ignore')
-os.chdir('/Users/witnes/Workspace/MDA/Peru-MDA-Ship')
-
-src_path = os.path.join(os.getcwd(), '/code')
-
-if src_path not in sys.path:
-    sys.path.append(os.getcwd() + '/code')
 
 from joblib import dump, load
-from model.model_pipeline import ModelPipeline
-from sklearn.preprocessing import OneHotEncoder,StandardScaler, FunctionTransformer
+from sklearn.preprocessing import OneHotEncoder,StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import classification_report,r2_score, accuracy_score, roc_auc_score
 from sklearn.feature_selection import f_regression, f_classif, chi2
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 svc_param_list = {
     'kernel': ['rbf'],
     'gamma': [1e-3, 1e-4, 1, 10, 100],
     'C': [1, 10, 100, 1000]
 }
-
-gbt_param_list = {
-    'n_estimators': [1000, 3000],
-    'max_leaf_nodes': range(2,4),
-    'min_samples_split': range(2,6),
-    'learning_rate': [0.02, 0.1, 0.2],
-    'subsample': [0.3, 0.4]
-    }
-
 
 rf_param_list = {
     'max_depth' : range(3, 7),
@@ -47,18 +25,18 @@ rf_param_list = {
 }
 
 
-class HeatwaveBinaryModel(ModelPipeline):
+class HeatwaveBinaryModel(object):
 
     def __init__(self, model_type):
 
         self.model_type = model_type
         self.load_model()
 
-    def refit_procedure(self, dataset_url, random_state, tune_hyperparameters = False):
+    def refit_procedure(self, dataset, random_state, tune_hyperparameters = False):
 
         self.random_state = random_state
 
-        self.__data_collect(dataset_url)
+        self.dataset = dataset
 
         self.__data_preprocess(refit = True)
 
@@ -89,9 +67,6 @@ class HeatwaveBinaryModel(ModelPipeline):
 
         print('%s model is loaded from code/model/%s.joblib !! \n' %(self.model_type, self.model_type))
 
-    def __data_collect(self, url):
-
-        self.dataset = pd.read_csv(url, index_col = ['country', 'year'])
 
     def __data_preprocess(self, refit = True):
 
@@ -140,28 +115,32 @@ class HeatwaveBinaryModel(ModelPipeline):
             'temp_mean','temp_median_l1', 'is_hw_happend_l4','region'
         ]
 
-        if refit :
+        if refit:
+
 
             self.column_trans = ColumnTransformer(
                 [
-                    ('incomeLevel_binned_numeric', OneHotEncoder(dtype ='int'), ['region']),
+                    ('incomeLevel_binned_numeric', OneHotEncoder(dtype= 'int'), ['region']),
                     ('Impute',SimpleImputer(strategy ='mean'), self.features[:-1])
                 ],
                 remainder = 'passthrough'
             )
 
+
             self.X = self.column_trans.fit_transform(self.dataset[self.features])
-        else :
 
-            self.X = self.column_trans.transform(self.dataset[self.features])
-
-        if refit:
+            dump(self.column_trans, 'model/column_transformer.joblib')
 
             # target variable
             self.y = self.dataset.is_hw_happend.values
 
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
                     self.X, self.y, test_size=0.3, random_state= self.random_state)
+        else:
+
+            self.column_trans = load('column_transformer.joblib')
+
+            self.X = self.column_trans.transform(self.dataset[self.features])
 
     def __fit_model(self, tune_hyperparameters = False, tune_score = None):
 
@@ -202,21 +181,3 @@ class HeatwaveBinaryModel(ModelPipeline):
         print("Best: %f using %s" % (mdl_cv.best_score_, mdl_cv.best_params_))
 
         return mdl_cv.best_estimator_
-
-
-
-
-if __name__ == '__main__':
-
-    hwb = HeatwaveBinaryModel('rf')
-
-    # run the refitting procedure
-    data_url = 'data/dim_all_country_info.csv'
-    hwb.refit_procedure(data_url, random_state = 24)
-
-    # persist the model if you want
-    hwb.dump_model()
-    # run the predict procedure
-    df_smp = pd.read_csv(data_url, index_col = ['country', 'year'])
-
-    print(hwb.predict_procedure(df_smp.iloc[100:2003]))

@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import world_bank_data as wb
 
@@ -81,45 +82,41 @@ class WBDIndicatorFetcher(object):
                     .set_index('Country',append =True).reorder_levels([1, 0], axis=0).sort_index()
 
 
-#%%
+if __name__ == '__main__':
 
-wbd = WBDIndicatorFetcher()
-wbd.construct_static_info()
-wbd.df_country_info
+    start_year, end_year = 1980, 2019
 
-# df_country_info.to_csv('Peru-MDA-Ship/data/dim_all_country_static_info.csv')
+    indicator_maps = {
+        'SP.POP.TOTL' : 'total_population',
+        'SP.URB.TOTL.IN.ZS' : 'urban_pop_ratio',
+        'AG.LND.FRST.ZS' : 'forest_area_ratio',
+        'NY.GDP.MKTP.KD.ZG': 'gdp_growth_rate',
+        'NY.GDP.MKTP.CD': 'gdp_growth_usd',
+        'EN.ATM.CO2E.KT': 'co2_emission_kt',
+        'AG.LND.AGRI.ZS': 'agri_land_ratio',
+        'EN.ATM.METH.KT.CE': 'methane_emission_kt',
+        'AG.PRD.LVSK.XD': 'livestock_prod_ind',
+        'AG.PRD.FOOD.XD': 'food_prod_ind'
+    }
 
-#%%
 
-indicator_maps = {
-    'SP.POP.TOTL' : 'total_population',
-    'SP.URB.TOTL.IN.ZS' : 'urban_pop_ratio',
-    'AG.LND.FRST.ZS' : 'forest_area_ratio',
-    'NY.GDP.MKTP.KD.ZG': 'gdp_growth_rate',
-    'NY.GDP.MKTP.CD': 'gdp_growth_usd',
-    'EN.ATM.CO2E.KT': 'co2_emission_kt',
-    'AG.LND.AGRI.ZS': 'agri_land_ratio',
-    'EN.ATM.METH.KT.CE': 'methane_emission_kt',
-    'AG.PRD.LVSK.XD': 'livestock_prod_ind',
-    'AG.PRD.FOOD.XD': 'food_prod_ind'
-}
+    wbd = WBDIndicatorFetcher()
+    wbd.construct_static_info()
+    wbd.construct_panel_data()
+    wbd.fetch_countries_indicators(indicator_maps)
 
-wbd.construct_panel_data()
-wbd.fetch_countries_indicators(indicator_maps)
+    df_country_ts = pd.merge(
+        wbd.df_country_ts,
+        wbd.df_country_info,
+        left_index= True,
+        right_index =True
+    ).reset_index().set_index(['iso2Code', 'year'])
 
-#%%
+    df_country_ts.index.names = ['country', 'year']
 
-df_country_ts = pd.merge(
-    wbd.df_country_ts,
-    wbd.df_country_info,
-    left_index= True,
-    right_index =True
-).reset_index().set_index(['iso2Code', 'year'])
+    df_country_ts.index.set_levels(
+         np.arange(start_year,end_year+1),1,
+         inplace= True
+    )
 
-df_country_ts.index.names = ['country', 'year']
-
-df_country_ts.index.set_levels(
-     np.arange(1980,2020),
-     1,
-     inplace= True
-)
+    df_country_ts.to_csv('data/dim_all_country_info_wb.csv')

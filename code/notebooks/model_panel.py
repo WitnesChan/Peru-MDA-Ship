@@ -1,4 +1,0 @@
-
-
-from model.heatwave_binarymodel import HeatwaveBinaryModel
-from model.heatwave_trend_tsmodel import HeatwaveTrendTSModel

@@ -1,29 +1,8 @@
-import os
-import sys
-os.chdir('/Users/witnes/Workspace/MDA/Peru-MDA-Ship')
-
-import warnings
-warnings.filterwarnings('ignore')
-os.chdir('/Users/witnes/Workspace/MDA/Peru-MDA-Ship')
-
-src_path = os.path.join(os.getcwd(), '/code')
-
-if src_path not in sys.path:
-    sys.path.append(os.getcwd() + '/code')
-
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-
-from model.model_pipeline import ModelPipeline
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.graphics.tsaplots import plot_predict
 from statsmodels.tsa.seasonal import STL, seasonal_decompose
-from statsmodels.tsa.stattools import adfuller, kpss
-
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 
 def stl_decomp(df_ts, period = 4):
@@ -36,18 +15,18 @@ def stl_decomp(df_ts, period = 4):
     return [trend, estimated]
 
 
-class HeatwaveTrendTSModel(ModelPipeline):
+class HeatwaveTrendTSModel(object):
 
     def __init__(self):
 
-        self.hw_metrics = ['HWN','HWF','HWD','HWA', 'HWM']
+        self.hw_metrics = ['HWN','HWD','HWF','HWA', 'HWM']
 
-        self.hw_trend_metrics = ['HWN_trend', 'HWF_trend','HWD_trend', 'HWA_trend', 'HWM_trend']
+        self.hw_trend_metrics = ['HWN_trend', 'HWD_trend','HWF_trend', 'HWA_trend', 'HWM_trend']
 
         self.hw_metric_title = {
             'HWN': 'HWN yearly number of heat waves',
-            'HWF': 'HWF yearly sum of participating heat waves',
             'HWD': 'HWD length of the longest yearly event',
+            'HWF': 'HWF yearly sum of participating heat waves',
             'HWA': 'HWA hottest day of hottest yearly event',
             'HWM': 'HWM average magnitude of all yearly heat waves',
         }
@@ -99,35 +78,17 @@ class HeatwaveTrendTSModel(ModelPipeline):
     def __summary_model_fit(self):
 
 
-        self.dataset[self.hw_trend_metrics].plot(subplots =True, legend = True)
+        # self.dataset[self.hw_trend_metrics].plot(subplots =True, legend = True)
 
-        pd.DataFrame(
+        self.scaled_trend_metrics = pd.DataFrame(
             StandardScaler().fit_transform(self.dataset[self.hw_trend_metrics]),
             columns = self.hw_trend_metrics,
             index = self.dataset.index
-        ).plot()
+        )
 
     def plot_estimated_metric(self, metric_name):
 
-        plt.figure(figsize=(8,6))
-        df_world_ts[[metric_name, '%s_trend'%metric_name, '%s_estimated'%metric_name]].plot(
+        plt.figure(figsize=(10,8))
+        self.dataset[[metric_name, '%s_trend'%metric_name, '%s_estimated'%metric_name]].plot(
             title = self.hw_metric_title[metric_name])
         plt.legend(loc= 'left upper')
-
-
-
-if __name__ == '__main__':
-
-    trd  = HeatwaveTrendTSModel()
-
-    df_country_ts = pd.read_csv('data/dim_all_country_info.csv',
-        index_col = ['country', 'year']
-        )
-
-    ## see the trend of heat wave in the whole world
-    trd.refit_procedure(df_country_ts)
-
-    trd.plot_estimated_metric('HWN')
-    ## see the trend of heat wave in the belgium
-
-    #trd.refit_procedure(df_country_ts.loc['BE'])
