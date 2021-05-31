@@ -9,6 +9,8 @@ of the repository.
 The app has a requirements.txt, install the dependencies in a virtual
 environment.
 
+The project is hosted on Github: https://github.com/WitnesChan/Peru-MDA-Ship/tree/master
+
 ## Downloading and running a single app
 
 download and `unzip` the app you want. Then `cd` into the app directory and install its dependencies in a virtual environment in the following way:
