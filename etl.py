@@ -1,10 +1,9 @@
-from os import path
-
+import world_bank_data as wb
 from meteostat import Point, Daily, Stations
 from datetime import datetime,date
+from os import path
 import numpy as np
 import pandas as pd
-
 
 def fetch_country_daily_temperature(country, start_date, end_date, num_of_stations):
 
@@ -241,12 +240,151 @@ def generate_heat_wave_by_temp(start_date, end_date):
 
     return df_hw_gen
 
+class WBDIndicatorFetcher(object):
 
-if __name__ == '__main__':
+    def __init__(self):
+        pass
 
-    start_date = datetime(2019, 1, 1)
-    end_date = datetime(2019, 12, 1)
+    def construct_static_info(self):
 
-    df_hw_gen = generate_heat_wave_by_temp(df_temp_day_coun, start_date, end_date)
+        self.df_country_info = wb.get_countries()
+        self.df_country_info = self.df_country_info[self.df_country_info.region !='Aggregates']
 
-    df_hw_gen.to_csv(heat_wave_gen_file)
+        from meteostat import Stations
+
+        ## fetch the number of weather stations for each country.
+        self.df_country_info['num_of_weather_station'] = self.df_country_info.apply(
+            lambda r: Stations().region(r['iso2Code']).count() ,axis=1
+            )
+        ## fetch the land area for each country.
+        self.fetch_countries_indicator(
+                indicator = 'AG.LND.TOTL.K2',
+                col_name = 'land_area_sq_km',
+                spec_year = '2018'
+                )
+
+        self.country_codes = self.df_country_info.index
+        self.df_country_info.index.names = ['country']
+
+
+    def construct_panel_data(self, start_year = 1980, end_year = 2020):
+
+        ## construct panel data
+        self.start_year = start_year
+        self.end_year = end_year
+
+        self.df_country_ts = pd.DataFrame(
+            index = pd.MultiIndex.from_product(
+                [
+                    self.country_codes ,
+                    pd.date_range(start = str(start_year), end = str(end_year),freq ='Y').to_period('Y').astype(str)
+                ]
+            )
+        )
+        self.df_country_ts.index.names = ['country', 'year']
+
+
+    def fetch_countries_indicator_ts(
+        self, indicator, col_name):
+        '''
+            add one more indicator to the df_country_ts
+        '''
+
+        for country in self.country_codes:
+            df_country_ts.loc[country, col_name] = wb.get_series(
+                indicator, country = country, simplify_index = True
+                ).loc[self.start_year:self.end_year].values
+
+
+    def fetch_countries_indicator(
+        self, indicator, col_name, spec_year):
+
+        self.df_country_info[col_name] = wb.get_series(
+                indicator, date = spec_year, simplify_index = True,
+                id_or_value = 'id'
+                )
+
+
+    def fetch_countries_indicators(self, indicator_maps):
+
+        for indicator, col_name in indicator_maps.items():
+
+            self.df_country_ts[col_name] = wb.get_series(
+                        indicator, simplify_index = True, id_or_value = 'id'
+                    ).reset_index(level =0).loc[np.arange(self.start_year, self.end_year).astype(str)] \
+                    .set_index('Country',append =True).reorder_levels([1, 0], axis=0).sort_index()
+
+def build_feature_data():
+
+    start_year, end_year = 2020, 2020
+    start_date = datetime(2020, 1, 1)
+    end_date = datetime(2020, 12, 1)
+
+    feature_file = 'data/dim_all_country_info_%d_%d.csv'%(start_year, end_year)
+    daily_country_weather_file = 'data/dim_temp_data_%d_%d.csv'%(start_year, end_year)
+
+    # data from world bank
+    indicator_maps = {
+        'SP.POP.TOTL' : 'total_population',
+        'SP.URB.TOTL.IN.ZS' : 'urban_pop_ratio',
+        'AG.LND.FRST.ZS' : 'forest_area_ratio',
+        'NY.GDP.MKTP.KD.ZG': 'gdp_growth_rate',
+        'NY.GDP.MKTP.CD': 'gdp_growth_usd',
+        'EN.ATM.CO2E.KT': 'co2_emission_kt',
+        'AG.LND.AGRI.ZS': 'agri_land_ratio',
+        'EN.ATM.METH.KT.CE': 'methane_emission_kt',
+        'AG.PRD.LVSK.XD': 'livestock_prod_ind',
+        'AG.PRD.FOOD.XD': 'food_prod_ind'
+    }
+
+
+    wbd = WBDIndicatorFetcher()
+    wbd.construct_static_info()
+    wbd.construct_panel_data()
+    wbd.fetch_countries_indicators(indicator_maps)
+
+    df_country_ts = pd.merge(
+        wbd.df_country_ts,
+        wbd.df_country_info,
+        left_index= True,
+        right_index =True
+    ).reset_index().set_index(['iso2Code', 'year'])
+
+    df_country_ts.index.names = ['country', 'year']
+
+    df_country_ts.index.set_levels(
+         np.arange(start_year,end_year),1,
+         inplace= True
+    )
+
+    # data from meteostat
+    if ~path.exists():
+        df_hw_gen = generate_heat_wave_by_temp(start_date, end_date)
+    else:
+        df_hw_gen = pd.read_csv(daily_country_weather_file)
+
+    df_country_ts_dim = pd.merge(
+        df_country_ts,
+        df_hw_gen,
+        left_index= True,
+        right_index =True,
+        how = 'left'
+    )
+
+    df_country_ts_dim = pd.read_csv(daily_country_weather_file)
+
+    df_country_ts_dim[['tmp_mean', 'tmp_median']] = df_temp_day_coun.groupby(
+            ['country', 'year']
+        )['tavg'].agg(['mean', 'median']).rename(
+            columns = {'mean':'temp_mean', 'median': 'temp_median'}
+            )
+
+    df_country_ts_dim.to_csv(feature_file)
+
+
+    # start_date = datetime(2019, 1, 1)
+    # end_date = datetime(2019, 12, 1)
+    #
+    # df_hw_gen = generate_heat_wave_by_temp(df_temp_day_coun, start_date, end_date)
+    #
+    # df_hw_gen.to_csv(heat_wave_gen_file)

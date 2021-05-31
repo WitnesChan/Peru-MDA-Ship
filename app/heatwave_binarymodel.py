@@ -57,15 +57,15 @@ class HeatwaveBinaryModel(object):
             After training a scikit-learn model,
             we can persist the model by this function for future use without having to retrain.
         '''
-        dump(self.model, 'code/model/%s.joblib' %self.model_type)
+        dump(self.model, 'app/%s.joblib' %self.model_type)
 
-        print('%s model is saved in code/model/%s.joblib !! \n' %(self.model_type, self.model_type))
+        print('%s model is saved in %s.joblib !! \n' %(self.model_type, self.model_type))
 
     def load_model(self):
 
-        self.model = load('code/model/%s.joblib' %self.model_type)
+        self.model = load('app/%s.joblib' %self.model_type)
 
-        print('%s model is loaded from code/model/%s.joblib !! \n' %(self.model_type, self.model_type))
+        print('%s model is loaded from %s.joblib !! \n' %(self.model_type, self.model_type))
 
 
     def __data_preprocess(self, refit = True):
@@ -117,7 +117,6 @@ class HeatwaveBinaryModel(object):
 
         if refit:
 
-
             self.column_trans = ColumnTransformer(
                 [
                     ('incomeLevel_binned_numeric', OneHotEncoder(dtype= 'int'), ['region']),
@@ -129,7 +128,7 @@ class HeatwaveBinaryModel(object):
 
             self.X = self.column_trans.fit_transform(self.dataset[self.features])
 
-            dump(self.column_trans, 'model/column_transformer.joblib')
+            dump(self.column_trans, 'app/column_transformer.joblib')
 
             # target variable
             self.y = self.dataset.is_hw_happend.values
@@ -138,7 +137,7 @@ class HeatwaveBinaryModel(object):
                     self.X, self.y, test_size=0.3, random_state= self.random_state)
         else:
 
-            self.column_trans = load('column_transformer.joblib')
+            self.column_trans = load('app/column_transformer.joblib')
 
             self.X = self.column_trans.transform(self.dataset[self.features])
 
@@ -167,9 +166,18 @@ class HeatwaveBinaryModel(object):
 
         print('roc_auc_score: %f' %self.roc_auc_score)
 
+        self.classification_report = classification_report(
+            self.y_test, self.model.predict(self.X_test),
+            target_names = ['Non Heat Wave', 'Heat Wave'],
+            output_dict = True
+            )
+
         print(
-            classification_report(self.y_test, self.model.predict(self.X_test),
-            target_names = ['Non Heat Wave', 'Heat Wave'])
+                classification_report(
+                    self.y_test, self.model.predict(self.X_test),
+                    target_names = ['Non Heat Wave', 'Heat Wave'],
+                    output_dict = False
+                    )
             )
 
     def __tune_hyperparameters(self, param_list, scoring = 'f1_macro'):

@@ -35,13 +35,13 @@
   .one.column,
   .one.columns                    { width: 4.66666666667%; }
   .two.columns                    { width: 13.3333333333%; }
-  .three.columns                  { width: 22%;            }
-  .four.columns                   { width: 30.6666666667%; }
-  .five.columns                   { width: 39.3333333333%; }
+  .three.columns                  { width: 24%;            }
+  .four.columns                   { width: 29.6666666667%; }
+  .five.columns                   { width: 36.3333333333%; }
   .six.columns                    { width: 48%;            }
-  .seven.columns                  { width: 56.6666666667%; }
+  .seven.columns                  { width: 60.8666666667%; }
   .eight.columns                  { width: 65.3333333333%; }
-  .nine.columns                   { width: 74.0%;          }
+  .nine.columns                   { width: 73.342222%;          }
   .ten.columns                    { width: 82.6666666667%; }
   .eleven.columns                 { width: 91.3333333333%; }
   .twelve.columns                 { width: 98%; margin-left: 0; margin-right: 0;}
@@ -389,8 +389,8 @@ there.
 .pretty_container {
   border-radius: 5px;
   background-color: #f3f3f1;  /* Mapbox light map land color */
-  margin: 1%;
-  padding: 1%;
+  margin: 0.83%;
+  padding: 0.95%;
   position: relative;
   box-shadow: 1px 1px 1px slategrey;
 }
