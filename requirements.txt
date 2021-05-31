@@ -18,3 +18,4 @@ meteostat
 ipynb
 dash
 dash_bootstrap_components
+gunicorn
