@@ -1,10 +1,9 @@
 
 ## Running an example app after cloning the repo
 
-You will need to run applications, and specify filenames, from the
-root directory of the repository. e.g., if the name of the app you
-want to run is `my_dash_app` and the app filename is `app.py`, you
-would need to run `python apps/my_dash_app/app.py` from the root
+You will need to run application and notebooks to investigate heatwave, and specify filenames, from the
+root directory of the repository. e.g., you
+would need to run `python app/app.py` from the root
 of the repository.
 
 The app has a requirements.txt, install the dependencies in a virtual
