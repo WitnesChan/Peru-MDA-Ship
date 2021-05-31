@@ -72,23 +72,16 @@ def build_tabs():
                 className="custom-tabs",
                 children=[
                     dcc.Tab(
-                        id="heatwave-overview-tab",
-                        label="Heatwave Overview",
-                        value="tab1",
-                        className="custom-tab",
-                        selected_className="custom-tab--selected",
-                    ),
-                    dcc.Tab(
                         id="heatwave-trend-tab",
                         label="Heatwave Trend Spot",
-                        value="tab2",
+                        value="tab1",
                         className="custom-tab",
                         selected_className="custom-tab--selected",
                     ),
                     dcc.Tab(
                         id="heatwave-binary-model-tab",
                         label="Binary Classification",
-                        value="tab3",
+                        value="tab2",
                         className="custom-tab",
                         selected_className="custom-tab--selected",
                     )
@@ -358,8 +351,6 @@ def build_hw_binary_model_panel():
         )]
     )
 
-def build_hw_overview():
-    pass
 
 ################################################
 # app layout
@@ -389,10 +380,8 @@ app.layout = html.Div(
 def render_tab_content(tab_switch):
 
     if tab_switch == 'tab1':
-        return [build_hw_overview()]
-    if tab_switch == 'tab2':
         return [build_hw_trend_spot_panel()]
-    if tab_switch == 'tab3':
+    if tab_switch == 'tab2':
         return [build_hw_binary_model_panel()]
 
 
@@ -519,4 +508,4 @@ def update_hw_bm_refit(n_click, classifier_type):
 
 if __name__ == '__main__':
 
-    app.run_server(debug=True)
+    app.run_server(debug=False)
