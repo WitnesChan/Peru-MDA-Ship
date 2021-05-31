@@ -1,4 +1,12 @@
 
+## Note on Organization of Project
+
+The Peru team is submitting one app and three Jupyter Notebooks for evaluation. 
+
+App: an app is created to covers topics on heatwave trend analysis. Further instructions on accessing the app are shown in the following sections.
+
+Notebooks: in the ‘/notebooks’ folder, the 3 Jupyter Notebooks presented for evaluation are titled: ‘Reddit_Sentimental_Analysis.ipynb’, ‘heatwave_on_gdp.ipynb’, and ‘mda_mortality.ipynb’.
+
 ## Running an example app after cloning the repo
 
 You will need to run application and notebooks to investigate heatwave, and specify filenames, from the
