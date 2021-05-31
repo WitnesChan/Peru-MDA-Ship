@@ -3,7 +3,7 @@
 
 The Peru team is submitting one app and three Jupyter Notebooks for evaluation. 
 
-App: an app is created to covers topics on heatwave trend analysis. Further instructions on accessing the app are shown in the following sections.
+App: an app is created to cover topics on heatwave trend analysis. Further instructions on accessing the app are shown in the following readme.txt sections.
 
 Notebooks: in the ‘/notebooks’ folder, the 3 Jupyter Notebooks presented for evaluation are titled: ‘Reddit_Sentimental_Analysis.ipynb’, ‘heatwave_on_gdp.ipynb’, and ‘mda_mortality.ipynb’.
 
