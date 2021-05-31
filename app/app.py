@@ -22,7 +22,7 @@ def read_from_s3_bucket(data_object_name):
     s3 = boto3.resource(
         service_name='s3',
         region_name='eu-central-1',
-        aws_access_key_id='AKIATJJR2V5V27JPS7JA',
+        aws_access_key_id = 'AKIATJJR2V5V27JPS7JA',
         aws_secret_access_key='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'
     )
 
@@ -201,14 +201,14 @@ def build_hw_trend_spot_panel():
                 ),
                 html.Div(
                     children = [
-                        html.H5("Heatwave Trend & Estimated Result"),
+                        html.H5("Frequency aspect of Heatwave"),
                         dcc.Graph(id="indicator_details_HWN"),
                     ],
                     className="seven columns pretty_container"
                 ),
                 html.Div(
                     children = [
-                        html.H5("Heatwave Trend & Estimated Result"),
+                        html.H5("Duration aspect of Heatwave"),
                         dcc.Graph(id="indicator_details_HWF"),
                         dcc.Graph(id="indicator_details_HWD")
                     ],
@@ -216,7 +216,7 @@ def build_hw_trend_spot_panel():
                 ),
                 html.Div(
                     children = [
-                        html.H5("Heatwave Trend & Estimated Result"),
+                        html.H5("Intensity aspect of Heatwave"),
                         dcc.Graph(id="indicator_details_HWA"),
                         dcc.Graph(id="indicator_details_HWM")
                     ],
@@ -420,16 +420,16 @@ def update_hw_trend_spot_panel(country_name, seasonal_period, ts_range):
 
     fig_1 = make_subplots(
         rows=5, cols=1,
-        shared_xaxes =True, x_title = 'Year'
+        shared_xaxes =True, x_title = 'Year',
         )
 
     fig_1.add_traces(
         [
-            go.Bar(y = trd.dataset.HWN_trend, x = trd.dataset.index),
-            go.Bar(y = trd.dataset.HWD_trend, x = trd.dataset.index),
-            go.Bar(y = trd.dataset.HWF_trend, x = trd.dataset.index),
-            go.Bar(y = trd.dataset.HWM_trend, x = trd.dataset.index),
-            go.Bar(y = trd.dataset.HWA_trend, x = trd.dataset.index),
+            go.Bar(y = trd.dataset.HWN_trend, x = trd.dataset.index, name = 'HWN_trend'),
+            go.Bar(y = trd.dataset.HWD_trend, x = trd.dataset.index, name = 'HWD_trend'),
+            go.Bar(y = trd.dataset.HWF_trend, x = trd.dataset.index, name = 'HWF_trend'),
+            go.Bar(y = trd.dataset.HWM_trend, x = trd.dataset.index, name = 'HWM_trend'),
+            go.Bar(y = trd.dataset.HWA_trend, x = trd.dataset.index, name = 'HWA_trend')
         ],
         rows=[1, 2, 3, 4, 5],
         cols=[1, 1, 1, 1, 1]
@@ -494,8 +494,6 @@ def update_hw_predict(n_click, classifier_type, country, time_range):
     ).applymap(lambda r: 'Yes' if r else 'No').T
 
     return df_res.to_dict('records')
-#Output('graph-line-roc-curve', 'figure'),
-
 
 
 @app.callback(
