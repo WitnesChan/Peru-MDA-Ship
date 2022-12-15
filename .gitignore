@@ -3,3 +3,4 @@ peru_venv/
 venv/
 __pycache__
 .ipynb_checkpoints/
+dim_temp_country_day_1980_2019.csv
