@@ -11,17 +11,8 @@ from sklearn.feature_selection import f_regression, f_classif, chi2
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 
-# df = pd.read_csv('data/dim_all_country_info.csv')
-
-# df['year.1'] =df['year']
-# df.to_csv('data/dim_all_country_info.csv', index =False)
 #%%
-# df.rename(columns = {
-#     'country': 'country.1',
-#     'country.1': 'country'
-# })[df.columns].to_csv('data/dim_all_country_info.csv', index =False)
-#
-#
+
 svc_param_list = {
     'kernel': ['rbf'],
     'gamma': [1e-3, 1e-4, 1, 10, 100],
@@ -83,6 +74,7 @@ class HeatwaveBinaryModel(object):
 
         # remove rows with no information of co2_emission_kt or temp_mean
         country = self.dataset['country.1'].dropna().unique()
+
         self.dataset = self.dataset[
             self.dataset['country.1'].isin(
                 country[
@@ -98,7 +90,7 @@ class HeatwaveBinaryModel(object):
         # add new lagged variable : 1 : heat wave happened in the last year, 0 :not happened in the last year
         self.dataset['is_hw_happend_l1'] = self.dataset.groupby(['country.1']).is_hw_happend.shift(1) \
             .apply(lambda r: 1 if r else 0)
-        # add new lagged variable : 1 : heat wave happened four years ago, 0 :not happened four years ago
+        # # add new lagged variable : 1 : heat wave happened four years ago, 0 :not happened four years ago
         self.dataset['is_hw_happend_l4'] = self.dataset.groupby(['country.1']).is_hw_happend.shift(4) \
             .apply(lambda r: 1 if r else 0)
 

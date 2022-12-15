@@ -357,34 +357,111 @@ def build_feature_data():
          inplace= True
     )
 
-    # data from meteostat
-    if ~path.exists():
-        df_hw_gen = generate_heat_wave_by_temp(start_date, end_date)
-    else:
-        df_hw_gen = pd.read_csv(daily_country_weather_file)
+#%%
+start_year, end_year = 2020, 2020
+start_date = datetime(2020, 1, 1)
+end_date = datetime(2020, 12, 1)
 
-    df_country_ts_dim = pd.merge(
-        df_country_ts,
-        df_hw_gen,
-        left_index= True,
-        right_index =True,
-        how = 'left'
-    )
+feature_file = 'data/dim_all_country_info_%d_%d.csv'%(start_year, end_year)
+daily_country_weather_file = 'data/dim_temp_data_%d_%d.csv'%(start_year, end_year)
 
-    df_country_ts_dim = pd.read_csv(daily_country_weather_file)
+# data from world bank
+indicator_maps = {
+    'SP.POP.TOTL' : 'total_population',
+    'SP.URB.TOTL.IN.ZS' : 'urban_pop_ratio',
+    'AG.LND.FRST.ZS' : 'forest_area_ratio',
+    'NY.GDP.MKTP.KD.ZG': 'gdp_growth_rate',
+    'NY.GDP.MKTP.CD': 'gdp_growth_usd',
+    'EN.ATM.CO2E.KT': 'co2_emission_kt',
+    'AG.LND.AGRI.ZS': 'agri_land_ratio',
+    'EN.ATM.METH.KT.CE': 'methane_emission_kt',
+    'AG.PRD.LVSK.XD': 'livestock_prod_ind',
+    'AG.PRD.FOOD.XD': 'food_prod_ind'
+}
 
-    df_country_ts_dim[['tmp_mean', 'tmp_median']] = df_temp_day_coun.groupby(
-            ['country', 'year']
-        )['tavg'].agg(['mean', 'median']).rename(
-            columns = {'mean':'temp_mean', 'median': 'temp_median'}
-            )
+daily_country_weather_file = 'data/dim_temp_data_%d_%d.csv'%(start_date.year, end_date.year)
 
-    df_country_ts_dim.to_csv(feature_file)
+wbd = WBDIndicatorFetcher()
+wbd.construct_static_info()
+wbd.construct_panel_data()
+wbd.fetch_countries_indicators(indicator_maps)
+
+df_country_ts = pd.merge(
+    wbd.df_country_ts,
+    wbd.df_country_info,
+    left_index= True,
+    right_index =True
+).reset_index().set_index(['iso2Code', 'year'])
+
+df_country_ts.index.names = ['country', 'year']
+
+df_country_ts.index.set_levels(
+     np.arange(start_year,end_year),1,
+     inplace= True
+)
+#%%
+
+# data from meteostat
+if ~path.exists():
+    df_hw_gen = generate_heat_wave_by_temp(start_date, end_date)
+else:
+    df_hw_gen = pd.read_csv(daily_country_weather_file)
 
 
-    # start_date = datetime(2019, 1, 1)
-    # end_date = datetime(2019, 12, 1)
-    #
-    # df_hw_gen = generate_heat_wave_by_temp(df_temp_day_coun, start_date, end_date)
-    #
-    # df_hw_gen.to_csv(heat_wave_gen_file)
+#%%
+# df_hw_gen = pd.read_csv('data/dim_temp_gen_heat_wave.csv', index_col =[0, 1])
+
+df_country_ts_dim = pd.merge(
+    df_country_ts,
+    df_hw_gen,
+    left_index= True,
+    right_index =True,
+    how = 'left'
+)
+
+#%%
+ df_country_ts_dim['is_hw_happend'] = df_country_ts_dim.apply(lambda r: True if r['HWA'] > 0 else False, axis =1 )
+#%%
+df_country_ts_dim['is_hw_happend'] = df_country_ts_dim.HWA.isna()
+
+#%%
+df_smp = pd.read_csv('data/dim_all_country_info.csv', index_col=[0,1])
+
+df_smp[['tmp_mean', 'tmp_median']] = df_country_ts_dim.groupby(
+        ['country', 'year']
+    )['tavg'].agg(['mean', 'median']).rename(
+        columns = {'mean':'temp_mean', 'median': 'temp_median'}
+        )
+#%%
+
+df_smp.reset_index().to_csv('data/dim_all_country_info.csv', index =False)
+#%%
+# df_country_ts_dim = pd.read_csv(daily_country_weather_file)
+df_country_ts_coun = pd.read_csv('data/dim_temp_country_day_1980_2019.csv')
+
+df_country_ts_dim[['temp_mean', 'temp_median']] = df_country_ts_coun.groupby(
+        ['country', 'year']
+    )['tavg'].agg(['mean', 'median']).rename(
+        columns = {'mean':'temp_mean', 'median': 'temp_median'}
+        )
+#%%
+
+df_country_ts_dim = df_country_ts_dim.reset_index()
+
+df_country_ts_dim['year.1'] = df_country_ts_dim['year']
+
+#%%%
+df_country_ts_dim['country.1']= df_country_ts_dim['country']
+#%%
+df_country_ts_dim.to_csv('data/dim_all_country_info_.csv', index = False)
+# df_country_ts_dim.to_csv(feature_file)
+
+# start_date = datetime(2019, 1, 1)
+# end_date = datetime(2019, 12, 1)
+#
+# df_hw_gen = generate_heat_wave_by_temp(df_temp_day_coun, start_date, end_date)
+#
+# df_hw_gen.to_csv(heat_wave_gen_file)
+
+#%%
+pd.read_csv('data/heat_wave_records.csv').set_index(['alpha2_code',	'Year'])

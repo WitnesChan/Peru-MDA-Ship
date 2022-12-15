@@ -48,7 +48,7 @@ df_country_code = pd.read_csv(
 
 
 dict_country_code = df_country_code[df_country_code.iso2Code.isin(
-    df_smp['country.1'].drop_duplicates().values
+    df_smp[~df_smp.HWA.isnull()]['country.1'].drop_duplicates().values
 )].rename(
     columns = { 'name':'label', 'iso2Code': 'value'}
     ).to_dict(orient='records')
