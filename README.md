@@ -33,3 +33,9 @@ then run the app:
 ```bash
 python app/app.py
 ```
+
+Docker instructions:
+```
+docker build . -t peru
+docker run -p 8050:8050 -v /full/path/to/data:/peru/data peru
+```
