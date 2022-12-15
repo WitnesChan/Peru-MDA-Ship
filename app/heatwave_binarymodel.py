@@ -11,6 +11,17 @@ from sklearn.feature_selection import f_regression, f_classif, chi2
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 
+# df = pd.read_csv('data/dim_all_country_info.csv')
+
+# df['year.1'] =df['year']
+# df.to_csv('data/dim_all_country_info.csv', index =False)
+#%%
+# df.rename(columns = {
+#     'country': 'country.1',
+#     'country.1': 'country'
+# })[df.columns].to_csv('data/dim_all_country_info.csv', index =False)
+#
+#
 svc_param_list = {
     'kernel': ['rbf'],
     'gamma': [1e-3, 1e-4, 1, 10, 100],
