@@ -34,10 +34,16 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-df_smp = pd.read_csv(read_from_s3_bucket('data/dim_all_country_info.csv'), index_col=[0,1])
+# df_smp = pd.read_csv(read_from_s3_bucket('data/dim_all_country_info.csv'), index_col=[0,1])
+
+df_smp = pd.read_csv('data/dim_all_country_info.csv', index_col=[0,1])
+#
+# df_country_code = pd.read_csv(
+#     read_from_s3_bucket('data/dim_all_country_static_info.csv')
+#     )[['iso2Code','name']].drop_duplicates()
 
 df_country_code = pd.read_csv(
-    read_from_s3_bucket('data/dim_all_country_static_info.csv')
+        'data/dim_all_country_static_info.csv'
     )[['iso2Code','name']].drop_duplicates()
 
 dict_country_code = df_country_code[df_country_code.iso2Code.isin(
@@ -45,6 +51,7 @@ dict_country_code = df_country_code[df_country_code.iso2Code.isin(
 )].rename(
     columns = { 'name':'label', 'iso2Code': 'value'}
     ).to_dict(orient='records')
+
 
 def build_banner():
     return html.Div(
