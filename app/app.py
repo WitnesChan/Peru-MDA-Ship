@@ -37,7 +37,7 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 # df_smp = pd.read_csv(read_from_s3_bucket('data/dim_all_country_info.csv'), index_col=[0,1])
 
 df_smp = pd.read_csv('data/dim_all_country_info.csv', index_col=[0,1])
-#
+
 # df_country_code = pd.read_csv(
 #     read_from_s3_bucket('data/dim_all_country_static_info.csv')
 #     )[['iso2Code','name']].drop_duplicates()
@@ -46,12 +46,12 @@ df_country_code = pd.read_csv(
         'data/dim_all_country_static_info.csv'
     )[['iso2Code','name']].drop_duplicates()
 
+
 dict_country_code = df_country_code[df_country_code.iso2Code.isin(
     df_smp['country.1'].drop_duplicates().values
 )].rename(
     columns = { 'name':'label', 'iso2Code': 'value'}
     ).to_dict(orient='records')
-
 
 def build_banner():
     return html.Div(
@@ -514,4 +514,5 @@ def update_hw_bm_refit(n_click, classifier_type):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False, host='0.0.0.0')
+
+    app.run_server(debug=True)
